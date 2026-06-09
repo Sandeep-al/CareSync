@@ -1,0 +1,60 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Healthcare Command Center</h2>
+  <p>Secure role-based access for hospital operations, clinical workflows, and patient visibility from one connected platform.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong>24/7</strong>
+      <span>Availability</span>
+    </div>
+    <div class="metric">
+      <strong>5 Roles</strong>
+      <span>Access Layers</span>
+    </div>
+    <div class="metric">
+      <strong>Live</strong>
+      <span>Session Security</span>
+    </div>
+    <div class="metric">
+      <strong>Unified</strong>
+      <span>Hospital Modules</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-sun">
+    <h2>Welcome to CareSync</h2>
+    <p class="muted">Use your designated role credentials to enter the right dashboard instantly.</p>
+    <ul class="login-feature-list">
+      <li>Admin control for bed, ward, staff, and catalog management</li>
+      <li>Doctor and staff workspaces for prescriptions, admissions, and billing</li>
+      <li>Patient visibility for appointments and admission progress</li>
+    </ul>
+  </article>
+
+  <article class="card narrow">
+    <h2>Secure Login</h2>
+    <form method="POST" action="/login" class="form-grid">
+      <label>Role</label>
+      <select name="role" required>
+        <option value="">Select role</option>
+        <option value="ADMIN">Admin</option>
+        <option value="DOCTOR">Doctor</option>
+        <option value="STAFF">Staff</option>
+        <option value="PATIENT">Patient</option>
+      </select>
+
+      <label>Email / Contact / UHID</label>
+      <input name="identifier" type="text" placeholder="user@example.com or 98xxxxxx" required />
+
+      <label>Password</label>
+      <input name="password" type="password" required />
+
+      <button type="submit">Login to Dashboard</button>
+    </form>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,77 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Billing & Revenue Desk</h2>
+  <p>Generate patient invoices post-discharge, monitor payment states, and close billing cycles without losing financial traceability.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= eligibleAdmissions.length %></strong>
+      <span>Ready for Billing</span>
+    </div>
+    <div class="metric">
+      <strong><%= bills.length %></strong>
+      <span>Total Bills</span>
+    </div>
+    <div class="metric">
+      <strong><%= bills.filter((b) => b.payment_status === 'PAID').length %></strong>
+      <span>Paid Bills</span>
+    </div>
+    <div class="metric">
+      <strong><%= bills.filter((b) => b.payment_status !== 'PAID').length %></strong>
+      <span>Pending Bills</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-sun">
+    <h2>Generate Bill (Discharged Admissions)</h2>
+    <form method="POST" action="/staff/billing/bills/generate" class="form-grid">
+      <label>Admission</label>
+      <select name="admission_id" required>
+        <% eligibleAdmissions.forEach((a) => { %>
+          <option value="<%= a.admission_id %>">
+            Admission <%= a.admission_id %> - <%= a.patient_name %> (Adm: <%= a.admission_date %>, Dis: <%= a.discharge_date %>)
+          </option>
+        <% }) %>
+      </select>
+      <label>Doctor Fees</label>
+      <input type="number" step="0.01" min="0" name="doctor_fees" value="0" required />
+      <button type="submit">Generate Bill</button>
+    </form>
+  </article>
+
+  <article class="card tint-sky">
+    <h2>Issued Bills</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Admission</th><th>Patient</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <% bills.forEach((b) => { %>
+            <tr>
+              <td><%= b.bill_id %></td>
+              <td><%= b.admission_id %></td>
+              <td><%= b.patient_name %></td>
+              <td>₹<%= b.total_amount %></td>
+              <td><span class="status-pill <%= b.payment_status === 'PAID' ? 'success' : 'danger' %>"><%= b.payment_status %></span></td>
+              <td>
+                <form method="POST" action="/staff/billing/bills/<%= b.bill_id %>/delete" class="action-form" onsubmit="return confirm('Delete this bill?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+                <% if (b.payment_status !== 'PAID') { %>
+                  <form method="POST" action="/staff/billing/bills/<%= b.bill_id %>/pay" class="action-form" style="margin-top: 6px;">
+                    <button type="submit" class="btn-muted">Mark Paid</button>
+                  </form>
+                <% } else { %>
+                  <span class="status-pill success">Paid on <%= b.payment_date %></span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

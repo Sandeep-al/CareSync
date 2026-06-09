@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> | CareSync</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">CS</div>
+      <div>
+        <h1 class="brand-title">CareSync HMS</h1>
+        <p class="brand-subtitle">Smart Hospital Operations Console</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <% if (user) { %>
+        <span class="user-chip"><%= user.name %> | <%= user.subRole ? user.subRole : user.role %></span>
+        <form method="POST" action="/logout">
+          <button type="submit">Logout</button>
+        </form>
+      <% } else { %>
+        <span class="user-chip">Guest Access</span>
+      <% } %>
+    </div>
+  </header>
+
+  <main class="container">
+    <% if (flash) { %>
+      <div class="alert <%= flash.type === 'error' ? 'alert-error' : 'alert-success' %>">
+        <%= flash.message %>
+      </div>
+    <% } %>

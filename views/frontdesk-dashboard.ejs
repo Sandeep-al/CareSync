@@ -1,0 +1,180 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Front Desk Coordination</h2>
+  <p>Handle registration, appointment planning, and admission workflow with complete visibility into patients, doctors, and bed availability.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= patients.length %></strong>
+      <span>Patients</span>
+    </div>
+    <div class="metric">
+      <strong><%= doctors.length %></strong>
+      <span>Doctors</span>
+    </div>
+    <div class="metric">
+      <strong><%= availableBeds.length %></strong>
+      <span>Open Beds</span>
+    </div>
+    <div class="metric">
+      <strong><%= appointments.length %></strong>
+      <span>Recent Appointments</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-mint">
+    <h2>Register Patient (OPD)</h2>
+    <form method="POST" action="/staff/front-desk/patients" class="form-grid">
+      <label>Name</label>
+      <input name="name" required />
+      <label>Contact</label>
+      <input name="contact" required />
+      <label>Blood Pressure</label>
+      <input name="blood_pressure" placeholder="120/80" />
+      <label>Heart Rate</label>
+      <input name="heart_rate" type="number" min="0" />
+      <label>Oxygen Level</label>
+      <input name="oxygen_level" type="number" step="0.01" />
+      <label>Severity Score (0-10)</label>
+      <input name="severity_score" type="number" min="0" max="10" />
+      <label>Patient Password</label>
+      <input name="password" type="password" required />
+      <button type="submit">Register Patient</button>
+    </form>
+  </article>
+
+  <article class="card tint-sky">
+    <h2>Book Appointment</h2>
+    <form method="POST" action="/staff/front-desk/appointments" class="form-grid">
+      <label>Patient</label>
+      <select name="patient_id" required>
+        <% patients.forEach((p) => { %>
+          <option value="<%= p.patient_id %>"><%= p.uhid %> - <%= p.name %></option>
+        <% }) %>
+      </select>
+      <label>Doctor</label>
+      <select name="doctor_id" required>
+        <% doctors.forEach((d) => { %>
+          <option value="<%= d.doctor_id %>"><%= d.name %> (<%= d.specialization %>)</option>
+        <% }) %>
+      </select>
+      <label>Date</label>
+      <input type="date" name="appointment_date" required />
+      <label>Time Slot</label>
+      <input type="time" name="time_slot" required />
+      <label>Reason</label>
+      <textarea name="reason"></textarea>
+      <input type="hidden" name="status" value="SCHEDULED" />
+      <button type="submit">Book Appointment</button>
+    </form>
+  </article>
+
+  <article class="card tint-peach">
+    <h2>Create Admission (IPD)</h2>
+    <form method="POST" action="/staff/front-desk/admissions" class="form-grid">
+      <label>Patient</label>
+      <select name="patient_id" required>
+        <% patients.forEach((p) => { %>
+          <option value="<%= p.patient_id %>"><%= p.uhid %> - <%= p.name %></option>
+        <% }) %>
+      </select>
+      <label>Doctor</label>
+      <select name="doctor_id">
+        <option value="">Unassigned</option>
+        <% doctors.forEach((d) => { %>
+          <option value="<%= d.doctor_id %>"><%= d.name %></option>
+        <% }) %>
+      </select>
+      <label>Available Bed</label>
+      <select name="bed_id">
+        <option value="">No bed yet</option>
+        <% availableBeds.forEach((b) => { %>
+          <option value="<%= b.bed_id %>"><%= b.ward_name %> - Bed <%= b.bed_number %> (₹<%= b.price_per_day %>/day)</option>
+        <% }) %>
+      </select>
+      <label>Diagnosis</label>
+      <textarea name="diagnosis"></textarea>
+      <button type="submit">Create Admission</button>
+    </form>
+  </article>
+
+  <article class="card tint-sun">
+    <h2>Recent Appointments</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <% appointments.forEach((a) => { %>
+            <tr>
+              <td><%= a.patient_name %></td>
+              <td><%= a.doctor_name %></td>
+              <td><%= a.appointment_date %></td>
+              <td><%= a.time_slot %></td>
+              <td><span class="status-pill <%= a.status === 'SCHEDULED' ? 'success' : 'warn' %>"><%= a.status %></span></td>
+              <td>
+                <form method="POST" action="/staff/front-desk/appointments/<%= a.appointment_id %>/delete" class="action-form" onsubmit="return confirm('Delete this appointment?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Recent Patients</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>UHID</th><th>Name</th><th>Contact</th><th>Registered</th><th>Action</th></tr></thead>
+        <tbody>
+          <% patients.forEach((p) => { %>
+            <tr>
+              <td><%= p.uhid %></td>
+              <td><%= p.name %></td>
+              <td><%= p.contact %></td>
+              <td><%= p.registration_date %></td>
+              <td>
+                <form method="POST" action="/staff/front-desk/patients/<%= p.patient_id %>/delete" class="action-form" onsubmit="return confirm('Delete this patient? This may remove related records too.');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Recent Admissions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Admitted</th><th>Action</th></tr></thead>
+        <tbody>
+          <% admissions.forEach((a) => { %>
+            <tr>
+              <td><%= a.admission_id %></td>
+              <td><%= a.patient_name %></td>
+              <td><%= a.doctor_name || 'Unassigned' %></td>
+              <td><span class="status-pill <%= a.status === 'ACTIVE' ? 'warn' : 'success' %>"><%= a.status %></span></td>
+              <td><%= a.admission_date %></td>
+              <td>
+                <form method="POST" action="/staff/front-desk/admissions/<%= a.admission_id %>/delete" class="action-form" onsubmit="return confirm('Delete this admission?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

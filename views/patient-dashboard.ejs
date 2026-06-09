@@ -1,0 +1,112 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Patient Care Timeline</h2>
+  <p>Stay informed about your appointments, doctor schedules, and in-patient treatment progress through a clear personal dashboard.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= appointments.length %></strong>
+      <span>Appointments</span>
+    </div>
+    <div class="metric">
+      <strong><%= admissions.length %></strong>
+      <span>Admissions</span>
+    </div>
+    <div class="metric">
+      <strong><%= appointments.filter((a) => a.status === 'SCHEDULED').length %></strong>
+      <span>Upcoming</span>
+    </div>
+    <div class="metric">
+      <strong><%= admissions.filter((a) => a.status === 'ACTIVE').length %></strong>
+      <span>Currently Active</span>
+    </div>
+    <div class="metric">
+      <strong><%= prescriptions.length %></strong>
+      <span>Prescription Items</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-sky">
+    <h2>My Appointments</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Specialization</th><th>Status</th></tr></thead>
+        <tbody>
+          <% appointments.forEach((a) => { %>
+            <tr>
+              <td><%= a.appointment_date %></td>
+              <td><%= a.time_slot %></td>
+              <td><%= a.doctor_name %></td>
+              <td><%= a.specialization %></td>
+              <td><span class="status-pill <%= a.status === 'SCHEDULED' ? 'success' : 'warn' %>"><%= a.status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card tint-mint">
+    <h2>My Admissions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Admitted</th><th>Discharged</th><th>Status</th><th>Diagnosis</th></tr></thead>
+        <tbody>
+          <% admissions.forEach((a) => { %>
+            <tr>
+              <td><%= a.admission_id %></td>
+              <td><%= a.admission_date %></td>
+              <td><%= a.discharge_date || '-' %></td>
+              <td><span class="status-pill <%= a.status === 'ACTIVE' ? 'warn' : 'success' %>"><%= a.status %></span></td>
+              <td><%= a.diagnosis || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="card tint-sun">
+  <h2>My Prescriptions & Medicines</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Prescription ID</th>
+          <th>Admission ID</th>
+          <th>Date</th>
+          <th>Doctor</th>
+          <th>Medicine</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!prescriptions.length) { %>
+          <tr>
+            <td colspan="8">No prescriptions available yet.</td>
+          </tr>
+        <% } else { %>
+          <% prescriptions.forEach((p) => { %>
+            <tr>
+              <td><%= p.prescription_id %></td>
+              <td><%= p.admission_id %></td>
+              <td><%= p.prescription_date %></td>
+              <td><%= p.doctor_name || '-' %></td>
+              <td><%= p.medicine_name || '-' %></td>
+              <td><%= p.quantity || '-' %></td>
+              <td><%= p.unit_price != null ? Number(p.unit_price).toFixed(2) : '-' %></td>
+              <td><%= p.line_total != null ? Number(p.line_total).toFixed(2) : '-' %></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

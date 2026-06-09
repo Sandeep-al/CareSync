@@ -1,0 +1,207 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Doctor Clinical Console</h2>
+  <p>Track schedules, issue prescriptions, request diagnostics, coordinate referrals, and close admissions with high confidence.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= appointments.length %></strong>
+      <span>Appointments</span>
+    </div>
+    <div class="metric">
+      <strong><%= admissions.length %></strong>
+      <span>Admissions</span>
+    </div>
+    <div class="metric">
+      <strong><%= medicines.length %></strong>
+      <span>Medicines</span>
+    </div>
+    <div class="metric">
+      <strong><%= labTests.length %></strong>
+      <span>Lab Tests</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-sky">
+    <h2>Scheduled Appointments</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th></tr></thead>
+        <tbody>
+          <% appointments.forEach((a) => { %>
+            <tr>
+              <td><%= a.patient_name %></td>
+              <td><%= a.appointment_date %></td>
+              <td><%= a.time_slot %></td>
+              <td><%= a.reason || '-' %></td>
+              <td><span class="status-pill <%= a.status === 'SCHEDULED' ? 'success' : 'warn' %>"><%= a.status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card tint-mint">
+    <h2>Create Prescription</h2>
+    <form method="POST" action="/doctor/prescriptions" class="form-grid">
+      <label>Admission ID</label>
+      <input type="number" name="admission_id" required />
+      <button type="submit">Create Prescription</button>
+    </form>
+
+    <h3>Add Prescription Item (Transactional)</h3>
+    <form method="POST" action="/doctor/prescriptions/1/items" class="form-grid" onsubmit="this.action='/doctor/prescriptions/' + this.prescription_id.value + '/items'">
+      <label>Prescription ID</label>
+      <input type="number" name="prescription_id" required />
+      <label>Medicine</label>
+      <select name="medicine_id" required>
+        <% medicines.forEach((m) => { %>
+          <option value="<%= m.medicine_id %>"><%= m.name %> (stock: <%= m.stock_quantity %>)</option>
+        <% }) %>
+      </select>
+      <label>Quantity</label>
+      <input type="number" name="quantity" min="1" required />
+      <button type="submit">Add Item + Deduct Stock</button>
+    </form>
+  </article>
+
+  <article class="card tint-peach">
+    <h2>Create Test Request</h2>
+    <form method="POST" action="/doctor/test-requests" class="form-grid">
+      <label>Admission ID</label>
+      <input type="number" name="admission_id" required />
+      <label>Lab Test</label>
+      <select name="test_id" required>
+        <% labTests.forEach((t) => { %>
+          <option value="<%= t.test_id %>"><%= t.test_name %> (₹<%= t.price %>)</option>
+        <% }) %>
+      </select>
+      <button type="submit">Create Test Request</button>
+    </form>
+
+    <h3>Create Referral</h3>
+    <form method="POST" action="/doctor/referrals" class="form-grid">
+      <label>Patient ID</label>
+      <input type="number" name="patient_id" required />
+      <label>Refer To Doctor</label>
+      <select name="to_doctor_id" required>
+        <% otherDoctors.forEach((d) => { %>
+          <option value="<%= d.doctor_id %>"><%= d.name %> - <%= d.specialization %></option>
+        <% }) %>
+      </select>
+      <label>Reason</label>
+      <textarea name="reason" required></textarea>
+      <button type="submit">Create Referral</button>
+    </form>
+  </article>
+
+  <article class="card tint-sun">
+    <h2>Admissions (Discharge)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Patient</th><th>Status</th><th>Admitted</th><th>Discharged</th><th>Action</th></tr></thead>
+        <tbody>
+          <% admissions.forEach((a) => { %>
+            <tr>
+              <td><%= a.admission_id %></td>
+              <td><%= a.patient_name %></td>
+              <td><span class="status-pill <%= a.status === 'ACTIVE' ? 'warn' : 'success' %>"><%= a.status %></span></td>
+              <td><%= a.admission_date %></td>
+              <td><%= a.discharge_date || '-' %></td>
+              <td>
+                <% if (a.status === 'ACTIVE') { %>
+                  <form method="POST" action="/doctor/admissions/<%= a.admission_id %>/discharge" class="action-form">
+                    <button type="submit" class="btn-muted">Discharge</button>
+                  </form>
+                <% } else { %>
+                  <span class="status-pill success">Closed</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Recent Prescriptions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Admission</th><th>Date</th><th>Items</th><th>Action</th></tr></thead>
+        <tbody>
+          <% prescriptions.forEach((p) => { %>
+            <tr>
+              <td><%= p.prescription_id %></td>
+              <td><%= p.admission_id %></td>
+              <td><%= p.prescription_date %></td>
+              <td><%= p.total_items %></td>
+              <td>
+                <form method="POST" action="/doctor/prescriptions/<%= p.prescription_id %>/delete" class="action-form" onsubmit="return confirm('Delete this prescription? Linked items will also be removed.');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Recent Test Requests</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Admission</th><th>Test</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <% testRequests.forEach((tr) => { %>
+            <tr>
+              <td><%= tr.request_id %></td>
+              <td><%= tr.admission_id %></td>
+              <td><%= tr.test_name %></td>
+              <td><%= tr.request_date %></td>
+              <td><span class="status-pill <%= tr.status === 'COMPLETED' ? 'success' : 'warn' %>"><%= tr.status %></span></td>
+              <td>
+                <form method="POST" action="/doctor/test-requests/<%= tr.request_id %>/delete" class="action-form" onsubmit="return confirm('Delete this test request?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Recent Referrals</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Patient</th><th>Referred To</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        <% referrals.forEach((r) => { %>
+          <tr>
+            <td><%= r.referral_id %></td>
+            <td><%= r.patient_name %></td>
+            <td><%= r.to_doctor_name %></td>
+            <td><%= r.referral_date %></td>
+            <td><span class="status-pill <%= r.status === 'PENDING' ? 'warn' : 'success' %>"><%= r.status %></span></td>
+            <td>
+              <form method="POST" action="/doctor/referrals/<%= r.referral_id %>/delete" class="action-form" onsubmit="return confirm('Delete this referral?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

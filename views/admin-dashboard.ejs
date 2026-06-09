@@ -1,0 +1,312 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Admin Operations Hub</h2>
+  <p>Manage core infrastructure across wards, beds, teams, partners, and diagnostics from one high-visibility command center.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= wards.length %></strong>
+      <span>Total Wards</span>
+    </div>
+    <div class="metric">
+      <strong><%= beds.length %></strong>
+      <span>Total Beds</span>
+    </div>
+    <div class="metric">
+      <strong><%= staff.length %></strong>
+      <span>Staff Profiles</span>
+    </div>
+    <div class="metric">
+      <strong><%= doctors.length %></strong>
+      <span>Doctors Active</span>
+    </div>
+  </div>
+</section>
+
+<section class="kpi-strip">
+  <article class="kpi">
+    <strong><%= suppliers.length %></strong>
+    <span>Supplier Partners</span>
+  </article>
+  <article class="kpi">
+    <strong><%= labTests.length %></strong>
+    <span>Lab Tests Catalog</span>
+  </article>
+  <article class="kpi">
+    <strong><%= beds.filter((b) => b.status === 'AVAILABLE').length %></strong>
+    <span>Available Beds</span>
+  </article>
+  <article class="kpi">
+    <strong><%= beds.filter((b) => b.status !== 'AVAILABLE').length %></strong>
+    <span>Busy or Maintenance</span>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card tint-sun">
+    <h2>Create Ward</h2>
+    <form method="POST" action="/admin/wards" class="form-grid">
+      <label>Ward Name</label>
+      <input name="ward_name" required />
+      <label>Ward Type</label>
+      <select name="ward_type" required>
+        <option value="GENERAL">GENERAL</option>
+        <option value="PRIVATE">PRIVATE</option>
+        <option value="ICU">ICU</option>
+      </select>
+      <button type="submit">Create Ward</button>
+    </form>
+  </article>
+
+  <article class="card tint-mint">
+    <h2>Add Bed</h2>
+    <form method="POST" action="/admin/beds" class="form-grid">
+      <label>Ward</label>
+      <select name="ward_id" required>
+        <% wards.forEach((w) => { %>
+          <option value="<%= w.ward_id %>"><%= w.ward_name %> (<%= w.ward_type %>)</option>
+        <% }) %>
+      </select>
+      <label>Bed Number</label>
+      <input type="number" name="bed_number" min="1" required />
+      <label>Status</label>
+      <select name="status" required>
+        <option value="AVAILABLE">AVAILABLE</option>
+        <option value="OCCUPIED">OCCUPIED</option>
+        <option value="UNDER_MAINTENANCE">UNDER_MAINTENANCE</option>
+      </select>
+      <label>Price Per Day</label>
+      <input type="number" step="0.01" name="price_per_day" required />
+      <button type="submit">Add Bed</button>
+    </form>
+  </article>
+
+  <article class="card tint-peach">
+    <h2>Create Staff</h2>
+    <form method="POST" action="/admin/staff" class="form-grid">
+      <label>Name</label>
+      <input name="name" required />
+      <label>Role</label>
+      <select name="role" required>
+        <option value="FRONT_DESK">FRONT_DESK</option>
+        <option value="PHARMACIST">PHARMACIST</option>
+        <option value="BILLING">BILLING</option>
+      </select>
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Contact</label>
+      <input name="contact" required />
+      <label>Password</label>
+      <input type="password" name="password" required />
+      <button type="submit">Create Staff</button>
+    </form>
+  </article>
+
+  <article class="card tint-sky">
+    <h2>Create Doctor</h2>
+    <form method="POST" action="/admin/doctors" class="form-grid">
+      <label>Name</label>
+      <input name="name" required />
+      <label>Specialization</label>
+      <input name="specialization" required />
+      <label>Ward</label>
+      <select name="ward_id">
+        <option value="">Unassigned</option>
+        <% wards.forEach((w) => { %>
+          <option value="<%= w.ward_id %>"><%= w.ward_name %></option>
+        <% }) %>
+      </select>
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Contact</label>
+      <input name="contact" required />
+      <label>Password</label>
+      <input type="password" name="password" required />
+      <button type="submit">Create Doctor</button>
+    </form>
+  </article>
+
+  <article class="card tint-mint">
+    <h2>Create Supplier</h2>
+    <form method="POST" action="/admin/suppliers" class="form-grid">
+      <label>Name</label>
+      <input name="name" required />
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Contact</label>
+      <input name="contact" required />
+      <label>Address</label>
+      <textarea name="address" required></textarea>
+      <button type="submit">Create Supplier</button>
+    </form>
+  </article>
+
+  <article class="card tint-peach">
+    <h2>Create Lab Test</h2>
+    <form method="POST" action="/admin/lab-tests" class="form-grid">
+      <label>Test Name</label>
+      <input name="test_name" required />
+      <label>Normal Range</label>
+      <input name="normal_range" placeholder="Optional" />
+      <label>Price</label>
+      <input type="number" step="0.01" name="price" required />
+      <button type="submit">Create Lab Test</button>
+    </form>
+  </article>
+</section>
+
+<section class="card">
+  <div class="split">
+    <h2>Wards and Beds</h2>
+    <p class="muted">Real-time occupancy and pricing snapshot</p>
+  </div>
+  <div class="table-wrap" style="margin-bottom: 12px;">
+    <table>
+      <thead><tr><th>Ward Name</th><th>Type</th><th>Action</th></tr></thead>
+      <tbody>
+        <% wards.forEach((w) => { %>
+          <tr>
+            <td><%= w.ward_name %></td>
+            <td><%= w.ward_type %></td>
+            <td>
+              <form method="POST" action="/admin/wards/<%= w.ward_id %>/delete" class="action-form" onsubmit="return confirm('Delete this ward? Related beds will also be removed.');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ward</th><th>Bed #</th><th>Status</th><th>Price/Day</th><th>Action</th></tr></thead>
+      <tbody>
+        <% beds.forEach((b) => { %>
+          <tr>
+            <td><%= b.ward_name %></td>
+            <td><%= b.bed_number %></td>
+            <td>
+              <span class="status-pill <%= b.status === 'AVAILABLE' ? 'success' : (b.status === 'UNDER_MAINTENANCE' ? 'warn' : 'danger') %>"><%= b.status %></span>
+            </td>
+            <td><%= b.price_per_day %></td>
+            <td>
+              <form method="POST" action="/admin/beds/<%= b.bed_id %>/delete" class="action-form" onsubmit="return confirm('Delete this bed?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+              <% if (b.status === 'AVAILABLE') { %>
+                <form method="POST" action="/admin/beds/<%= b.bed_id %>/maintenance" class="action-form" onsubmit="return confirm('Mark this bed as under maintenance?');">
+                  <button type="submit">Maintenance</button>
+                </form>
+              <% } else if (b.status === 'UNDER_MAINTENANCE') { %>
+                <form method="POST" action="/admin/beds/<%= b.bed_id %>/available" class="action-form" onsubmit="return confirm('Mark this bed as available?');">
+                  <button type="submit">Make Available</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Staff Accounts</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Contact</th><th>Action</th></tr></thead>
+        <tbody>
+          <% staff.forEach((s) => { %>
+            <tr>
+              <td><%= s.name %></td>
+              <td><%= s.role %></td>
+              <td><%= s.email %></td>
+              <td><%= s.contact %></td>
+              <td>
+                <form method="POST" action="/admin/staff/<%= s.staff_id %>/delete" class="action-form" onsubmit="return confirm('Delete this staff account?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Doctors</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Spec</th><th>Ward</th><th>Email</th><th>Action</th></tr></thead>
+        <tbody>
+          <% doctors.forEach((d) => { %>
+            <tr>
+              <td><%= d.name %></td>
+              <td><%= d.specialization %></td>
+              <td><%= d.ward_name || 'Unassigned' %></td>
+              <td><%= d.email %></td>
+              <td>
+                <form method="POST" action="/admin/doctors/<%= d.doctor_id %>/delete" class="action-form" onsubmit="return confirm('Delete this doctor account?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="grid two">
+  <article class="card">
+    <h2>Suppliers</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Contact</th><th>Action</th></tr></thead>
+        <tbody>
+          <% suppliers.forEach((s) => { %>
+            <tr>
+              <td><%= s.name %></td>
+              <td><%= s.email %></td>
+              <td><%= s.contact %></td>
+              <td>
+                <form method="POST" action="/admin/suppliers/<%= s.supplier_id %>/delete" class="action-form" onsubmit="return confirm('Delete this supplier?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Lab Tests</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Test Name</th><th>Normal Range</th><th>Price</th><th>Action</th></tr></thead>
+        <tbody>
+          <% labTests.forEach((t) => { %>
+            <tr>
+              <td><%= t.test_name %></td>
+              <td><%= t.normal_range || '-' %></td>
+              <td><%= t.price %></td>
+              <td>
+                <form method="POST" action="/admin/lab-tests/<%= t.test_id %>/delete" class="action-form" onsubmit="return confirm('Delete this lab test?');">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,12 @@
+<%- include('partials/header', { title }) %>
+<section class="hero">
+  <h2>Something Interrupted The Workflow</h2>
+  <p>CareSync could not complete this request due to a server-side issue. Please return to a safe page and retry.</p>
+</section>
+
+<section class="card narrow tint-peach">
+  <h2>Server Error</h2>
+  <p class="muted"><%= error %></p>
+  <a href="/dashboard" class="link-btn">Back to Dashboard</a>
+</section>
+<%- include('partials/footer') %>

@@ -1,0 +1,304 @@
+CREATE TABLE `admin` (
+  `admin_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `contact` varchar(15) NOT NULL,
+  PRIMARY KEY (`admin_id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `contact` (`contact`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `admission` (
+  `admission_id` int NOT NULL AUTO_INCREMENT,
+  `patient_id` int NOT NULL,
+  `doctor_id` int DEFAULT NULL,
+  `bed_id` int DEFAULT NULL,
+  `admission_date` date NOT NULL DEFAULT (curdate()),
+  `discharge_date` date DEFAULT NULL,
+  `diagnosis` text,
+  `status` varchar(20) NOT NULL,
+  PRIMARY KEY (`admission_id`),
+  KEY `patient_id` (`patient_id`),
+  KEY `doctor_id` (`doctor_id`),
+  KEY `bed_id` (`bed_id`),
+  KEY `idx_admission_status` (`status`),
+  KEY `idx_admission_date` (`admission_date`),
+  CONSTRAINT `admission_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`patient_id`) ON DELETE CASCADE,
+  CONSTRAINT `admission_ibfk_2` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE SET NULL,
+  CONSTRAINT `admission_ibfk_3` FOREIGN KEY (`bed_id`) REFERENCES `bed` (`bed_id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_adm_dates` CHECK (((`discharge_date` is null) or (`discharge_date` >= `admission_date`))),
+  CONSTRAINT `chk_adm_status` CHECK ((`status` in (_utf8mb4'ACTIVE',_utf8mb4'DISCHARGED')))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `appointment` (
+  `appointment_id` int NOT NULL AUTO_INCREMENT,
+  `patient_id` int NOT NULL,
+  `doctor_id` int NOT NULL,
+  `appointment_date` date NOT NULL,
+  `time_slot` time NOT NULL,
+  `reason` text,
+  `status` varchar(20) NOT NULL,
+  PRIMARY KEY (`appointment_id`),
+  UNIQUE KEY `doctor_id` (`doctor_id`,`appointment_date`,`time_slot`),
+  KEY `patient_id` (`patient_id`),
+  KEY `idx_appointment_status` (`status`),
+  KEY `idx_doc_date_appt` (`doctor_id`,`appointment_date`),
+  CONSTRAINT `appointment_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`patient_id`) ON DELETE CASCADE,
+  CONSTRAINT `appointment_ibfk_2` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_appt_status` CHECK ((`status` in (_utf8mb4'SCHEDULED',_utf8mb4'COMPLETED',_utf8mb4'CANCELLED')))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `bed` (
+  `bed_id` int NOT NULL AUTO_INCREMENT,
+  `ward_id` int NOT NULL,
+  `bed_number` int NOT NULL,
+  `status` varchar(20) NOT NULL,
+  `price_per_day` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`bed_id`),
+  UNIQUE KEY `ward_id` (`ward_id`,`bed_number`),
+  KEY `idx_bed_status` (`status`),
+  KEY `idx_ward_bed` (`ward_id`,`status`),
+  CONSTRAINT `bed_ibfk_1` FOREIGN KEY (`ward_id`) REFERENCES `ward` (`ward_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_bed_price` CHECK ((`price_per_day` > 0)),
+  CONSTRAINT `chk_bed_status` CHECK ((`status` in (_utf8mb4'AVAILABLE',_utf8mb4'OCCUPIED',_utf8mb4'UNDER_MAINTENANCE')))
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `bill` (
+  `bill_id` int NOT NULL AUTO_INCREMENT,
+  `admission_id` int NOT NULL,
+  `doctor_fees` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `room_charges` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `medicine_cost` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `lab_cost` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `total_amount` decimal(10,2) NOT NULL,
+  `payment_status` varchar(20) NOT NULL,
+  `payment_date` date DEFAULT NULL,
+  PRIMARY KEY (`bill_id`),
+  UNIQUE KEY `admission_id` (`admission_id`),
+  KEY `idx_bill_status` (`payment_status`),
+  KEY `idx_payment_date` (`payment_date`),
+  CONSTRAINT `bill_ibfk_1` FOREIGN KEY (`admission_id`) REFERENCES `admission` (`admission_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_doc_fee` CHECK ((`doctor_fees` >= 0)),
+  CONSTRAINT `chk_lab_cost` CHECK ((`lab_cost` >= 0)),
+  CONSTRAINT `chk_med_cost` CHECK ((`medicine_cost` >= 0)),
+  CONSTRAINT `chk_pay_status` CHECK ((`payment_status` in (_utf8mb4'PENDING',_utf8mb4'PAID'))),
+  CONSTRAINT `chk_room_chg` CHECK ((`room_charges` >= 0)),
+  CONSTRAINT `chk_tot_amt` CHECK ((`total_amount` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `doctor` (
+  `doctor_id` int NOT NULL AUTO_INCREMENT,
+  `ward_id` int DEFAULT NULL,
+  `name` varchar(100) NOT NULL,
+  `specialization` varchar(100) NOT NULL,
+  `contact` varchar(15) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`doctor_id`),
+  UNIQUE KEY `contact` (`contact`),
+  UNIQUE KEY `email` (`email`),
+  KEY `ward_id` (`ward_id`),
+  KEY `idx_doctor_name` (`name`),
+  KEY `idx_doctor_spec` (`specialization`),
+  CONSTRAINT `doctor_ibfk_1` FOREIGN KEY (`ward_id`) REFERENCES `ward` (`ward_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `lab_test` (
+  `test_id` int NOT NULL AUTO_INCREMENT,
+  `test_name` varchar(100) NOT NULL,
+  `normal_range` varchar(50) DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`test_id`),
+  UNIQUE KEY `test_name` (`test_name`),
+  CONSTRAINT `chk_test_price` CHECK ((`price` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `medicine` (
+  `medicine_id` int NOT NULL AUTO_INCREMENT,
+  `supplier_id` int DEFAULT NULL,
+  `name` varchar(100) NOT NULL,
+  `stock_quantity` int NOT NULL DEFAULT '0',
+  `unit_price` decimal(10,2) NOT NULL,
+  `reorder_level` int NOT NULL DEFAULT '10',
+  `expiry_date` date NOT NULL,
+  PRIMARY KEY (`medicine_id`),
+  KEY `supplier_id` (`supplier_id`),
+  KEY `idx_medicine_name` (`name`),
+  KEY `idx_med_expiry` (`expiry_date`),
+  CONSTRAINT `medicine_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `supplier` (`supplier_id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_med_price` CHECK ((`unit_price` > 0)),
+  CONSTRAINT `chk_med_stock` CHECK ((`stock_quantity` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `patient` (
+  `patient_id` int NOT NULL AUTO_INCREMENT,
+  `uhid` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `contact` varchar(15) NOT NULL,
+  `blood_pressure` varchar(20) DEFAULT NULL,
+  `heart_rate` int DEFAULT NULL,
+  `oxygen_level` decimal(5,2) DEFAULT NULL,
+  `severity_score` int DEFAULT NULL,
+  `registration_date` date NOT NULL DEFAULT (curdate()),
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`patient_id`),
+  UNIQUE KEY `uhid` (`uhid`),
+  UNIQUE KEY `contact` (`contact`),
+  KEY `idx_patient_name` (`name`),
+  CONSTRAINT `chk_severity` CHECK (((`severity_score` >= 0) and (`severity_score` <= 10)))
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `prescription` (
+  `prescription_id` int NOT NULL AUTO_INCREMENT,
+  `admission_id` int NOT NULL,
+  `doctor_id` int DEFAULT NULL,
+  `prescription_date` date NOT NULL DEFAULT (curdate()),
+  PRIMARY KEY (`prescription_id`),
+  KEY `admission_id` (`admission_id`),
+  KEY `doctor_id` (`doctor_id`),
+  CONSTRAINT `prescription_ibfk_1` FOREIGN KEY (`admission_id`) REFERENCES `admission` (`admission_id`) ON DELETE CASCADE,
+  CONSTRAINT `prescription_ibfk_2` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `prescription_item` (
+  `item_id` int NOT NULL AUTO_INCREMENT,
+  `prescription_id` int NOT NULL,
+  `medicine_id` int NOT NULL,
+  `quantity` int NOT NULL,
+  `reserved` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`item_id`),
+  UNIQUE KEY `prescription_id` (`prescription_id`,`medicine_id`),
+  KEY `medicine_id` (`medicine_id`),
+  CONSTRAINT `prescription_item_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`prescription_id`) ON DELETE CASCADE,
+  CONSTRAINT `prescription_item_ibfk_2` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`medicine_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_item_qty` CHECK ((`quantity` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `referral` (
+  `referral_id` int NOT NULL AUTO_INCREMENT,
+  `from_doctor_id` int NOT NULL,
+  `to_doctor_id` int NOT NULL,
+  `patient_id` int NOT NULL,
+  `reason` text NOT NULL,
+  `referral_date` date NOT NULL DEFAULT (curdate()),
+  `status` varchar(20) NOT NULL,
+  PRIMARY KEY (`referral_id`),
+  KEY `from_doctor_id` (`from_doctor_id`),
+  KEY `to_doctor_id` (`to_doctor_id`),
+  KEY `patient_id` (`patient_id`),
+  CONSTRAINT `referral_ibfk_1` FOREIGN KEY (`from_doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE CASCADE,
+  CONSTRAINT `referral_ibfk_2` FOREIGN KEY (`to_doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE CASCADE,
+  CONSTRAINT `referral_ibfk_3` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`patient_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_diff_doc` CHECK ((`from_doctor_id` <> `to_doctor_id`)),
+  CONSTRAINT `chk_ref_status` CHECK ((`status` in (_utf8mb4'PENDING',_utf8mb4'ACCEPTED',_utf8mb4'COMPLETED')))
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `reorder_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
+  `medicine_id` int NOT NULL,
+  `log_date` date NOT NULL DEFAULT (curdate()),
+  `quantity_needed` int NOT NULL,
+  `status` varchar(20) NOT NULL,
+  PRIMARY KEY (`log_id`),
+  KEY `medicine_id` (`medicine_id`),
+  CONSTRAINT `reorder_log_ibfk_1` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`medicine_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_log_qty` CHECK ((`quantity_needed` > 0)),
+  CONSTRAINT `chk_log_status` CHECK ((`status` in (_utf8mb4'PENDING',_utf8mb4'ORDERED',_utf8mb4'RECEIVED')))
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `staff` (
+  `staff_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `role` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `contact` varchar(15) NOT NULL,
+  PRIMARY KEY (`staff_id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `contact` (`contact`),
+  KEY `idx_staff_name` (`name`),
+  CONSTRAINT `chk_staff_role` CHECK ((`role` in (_utf8mb4'FRONT_DESK',_utf8mb4'PHARMACIST',_utf8mb4'BILLING')))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `supplier` (
+  `supplier_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `contact` varchar(15) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `address` text NOT NULL,
+  PRIMARY KEY (`supplier_id`),
+  UNIQUE KEY `contact` (`contact`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `test_request` (
+  `request_id` int NOT NULL AUTO_INCREMENT,
+  `admission_id` int NOT NULL,
+  `test_id` int NOT NULL,
+  `doctor_id` int DEFAULT NULL,
+  `request_date` date NOT NULL DEFAULT (curdate()),
+  `result` text,
+  `status` varchar(20) NOT NULL,
+  PRIMARY KEY (`request_id`),
+  KEY `admission_id` (`admission_id`),
+  KEY `test_id` (`test_id`),
+  KEY `doctor_id` (`doctor_id`),
+  KEY `idx_test_req_status` (`status`),
+  CONSTRAINT `test_request_ibfk_1` FOREIGN KEY (`admission_id`) REFERENCES `admission` (`admission_id`) ON DELETE CASCADE,
+  CONSTRAINT `test_request_ibfk_2` FOREIGN KEY (`test_id`) REFERENCES `lab_test` (`test_id`) ON DELETE CASCADE,
+  CONSTRAINT `test_request_ibfk_3` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`doctor_id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_req_status` CHECK ((`status` in (_utf8mb4'PENDING',_utf8mb4'COMPLETED')))
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `ward` (
+  `ward_id` int NOT NULL AUTO_INCREMENT,
+  `ward_name` varchar(50) NOT NULL,
+  `ward_type` varchar(20) NOT NULL,
+  PRIMARY KEY (`ward_id`),
+  UNIQUE KEY `ward_name` (`ward_name`),
+  CONSTRAINT `chk_ward_type` CHECK ((`ward_type` in (_utf8mb4'GENERAL',_utf8mb4'PRIVATE',_utf8mb4'ICU')))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+
+
+//TWO triggers
+
+USE caresync;
+
+DELIMITER //
+
+CREATE TRIGGER After_Medicine_Update_Reorder
+AFTER UPDATE ON medicine
+FOR EACH ROW
+BEGIN
+    IF NEW.stock_quantity <= NEW.reorder_level AND OLD.stock_quantity > OLD.reorder_level THEN
+        INSERT INTO reorder_log (medicine_id, log_date, quantity_needed, status)
+        VALUES (NEW.medicine_id, CURDATE(), 50, 'PENDING');
+    END IF;
+END //
+
+DELIMITER ;
+
+
+
+second 
+
+USE caresync;
+
+DELIMITER //
+
+CREATE TRIGGER After_Admission_Insert_Bed_Status
+AFTER INSERT ON admission
+FOR EACH ROW
+BEGIN
+    -- Check karta hai ki kya admission ke time bed assign hua hai
+    IF NEW.bed_id IS NOT NULL THEN
+        UPDATE bed
+        SET status = 'OCCUPIED'
+        WHERE bed_id = NEW.bed_id;
+    END IF;
+END //
+
+DELIMITER ;

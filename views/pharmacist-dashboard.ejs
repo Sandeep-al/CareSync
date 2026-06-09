@@ -1,0 +1,94 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <h2>Pharmacy Inventory Studio</h2>
+  <p>Control medicine stocking, monitor reorder triggers, and maintain expiry-safe inventory performance across the hospital.</p>
+  <div class="hero-metrics">
+    <div class="metric">
+      <strong><%= medicines.length %></strong>
+      <span>Inventory SKUs</span>
+    </div>
+    <div class="metric">
+      <strong><%= suppliers.length %></strong>
+      <span>Suppliers</span>
+    </div>
+    <div class="metric">
+      <strong><%= reorders.length %></strong>
+      <span>Reorder Logs</span>
+    </div>
+    <div class="metric">
+      <strong><%= medicines.filter((m) => Number(m.stock_quantity) <= Number(m.reorder_level)).length %></strong>
+      <span>Low Stock Items</span>
+    </div>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card tint-mint">
+    <h2>Add Medicine (Stocking)</h2>
+    <form method="POST" action="/staff/pharmacist/medicines" class="form-grid">
+      <label>Name</label>
+      <input name="name" required />
+      <label>Supplier</label>
+      <select name="supplier_id">
+        <option value="">Unknown/None</option>
+        <% suppliers.forEach((s) => { %>
+          <option value="<%= s.supplier_id %>"><%= s.name %></option>
+        <% }) %>
+      </select>
+      <label>Stock Quantity</label>
+      <input name="stock_quantity" type="number" min="0" required />
+      <label>Unit Price</label>
+      <input name="unit_price" type="number" step="0.01" required />
+      <label>Reorder Level</label>
+      <input name="reorder_level" type="number" min="1" value="10" required />
+      <label>Expiry Date</label>
+      <input name="expiry_date" type="date" required />
+      <button type="submit">Add Medicine</button>
+    </form>
+  </article>
+
+  <article class="card tint-peach">
+    <h2>Reorder Logs</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Medicine</th><th>Date</th><th>Qty</th><th>Status</th></tr></thead>
+        <tbody>
+          <% reorders.forEach((r) => { %>
+            <tr><td><%= r.log_id %></td><td><%= r.medicine_name %></td><td><%= r.log_date %></td><td><%= r.quantity_needed %></td><td><span class="status-pill <%= r.status === 'OPEN' ? 'danger' : 'success' %>"><%= r.status %></span></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Inventory Snapshot</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Medicine</th><th>Supplier</th><th>Stock</th><th>Reorder</th><th>Price</th><th>Expiry</th><th>Action</th></tr></thead>
+      <tbody>
+        <% medicines.forEach((m) => { %>
+          <tr>
+            <td><%= m.name %></td>
+            <td><%= m.supplier_name || 'N/A' %></td>
+            <td>
+              <span class="status-pill <%= Number(m.stock_quantity) <= Number(m.reorder_level) ? 'danger' : 'success' %>"><%= m.stock_quantity %></span>
+            </td>
+            <td><%= m.reorder_level %></td>
+            <td><%= m.unit_price %></td>
+            <td><%= m.expiry_date %></td>
+            <td>
+              <form method="POST" action="/staff/pharmacist/medicines/<%= m.medicine_id %>/delete" class="action-form" onsubmit="return confirm('Delete this medicine?');">
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
